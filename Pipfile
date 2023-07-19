@@ -1,0 +1,42 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+beautifulsoup4 = "*"
+requests = "*"
+langchain = "==0.0.229"
+black = "*"
+openai = "*"
+install = "*"
+google-search-results = "*"
+tweepy = "*"
+flask = "*"
+python-dotenv  = "*"
+wikipedia = "*"
+google-api-python-client = "*"
+chainlit = "==0.3.0"
+chromadb = "==0.3.26"
+unstructured = "*"
+pdf2image = "*"
+sentence_transformers = "*"
+tiktoken = "*"
+slack-sdk = "==3.21.3"
+slackclient = "==2.9.4"
+slackeventsapi = "==3.0.1"
+wrapt = "==1.15.0"
+torch = "*"
+torchvision  = "*"
+torchaudio = "*"
+transformers = "*"
+opencv-python = "*"
+Pillow = "*"
+pafy = "*"
+yt-dlp = "==2023.06.22"
+pydub = "*"
+youtube-dl = {editable = true, git = "https://github.com/ytdl-org/youtube-dl.git"}
+[dev-packages]
+
+[requires]
+python_version = "3.11"

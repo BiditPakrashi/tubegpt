@@ -112,7 +112,16 @@ ENV/
 
 # mkdocs build dir
 site/
-tubegpt/notebook/FOOD DELIVERY. ORDERING FAST FOOD.-6RClsEZuXtE- TRIM.mp3
-.gitignore
-tubegpt/notebook/FOOD DELIVERY. ORDERING FAST FOOD.-6RClsEZuXtE.mp3
-tubegpt/notebook/How to Tap into Your Awareness _ Yongey Mingyur Rinpoche _ TED-LDVyOnf0t9M.m4a
+
+
+
+
+src/notebook/FOOD DELIVERY. ORDERING FAST FOOD.-6RClsEZuXtE- TRIM.mp3
+src/notebook/FOOD DELIVERY. ORDERING FAST FOOD.-6RClsEZuXtE.mp3
+src/notebook/How to Tap into Your Awareness _ Yongey Mingyur Rinpoche _ TED-LDVyOnf0t9M.m4a
+src/notebook/demo1.mp4
+src/notebook/video.mp4
+src/tubegptdb
+src/tubegptvisiondb
+src/tubegptvisionlargedb
+.env

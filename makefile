@@ -1,4 +1,4 @@
-sources = tubegpt
+sources = dags
 
 .PHONY: test format lint unittest coverage pre-commit clean
 test: format lint unittest
@@ -9,6 +9,7 @@ format:
 
 lint:
 	flake8 $(sources) tests
+	mypy $(sources) tests
 
 unittest:
 	pytest
@@ -20,7 +21,7 @@ pre-commit:
 	pre-commit run --all-files
 
 clean:
-	rm -rf .pytest_cache
+	rm -rf .mypy_cache .pytest_cache
 	rm -rf *.egg-info
 	rm -rf .tox dist site
 	rm -rf coverage.xml .coverage
