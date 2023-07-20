@@ -36,6 +36,7 @@ pafy = "*"
 yt-dlp = "==2023.06.22"
 pydub = "*"
 youtube-dl = {editable = true, git = "https://github.com/ytdl-org/youtube-dl.git"}
+accelerate = "*"
 [dev-packages]
 
 [requires]
