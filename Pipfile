@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 beautifulsoup4 = "*"
 requests = "*"
-langchain = "==0.0.229"
+langchain = "==0.0.250"
 black = "*"
 openai = "*"
 install = "*"
@@ -22,9 +22,6 @@ unstructured = "*"
 pdf2image = "*"
 sentence_transformers = "*"
 tiktoken = "*"
-slack-sdk = "==3.21.3"
-slackclient = "==2.9.4"
-slackeventsapi = "==3.0.1"
 wrapt = "==1.15.0"
 torch = "*"
 torchvision  = "*"
@@ -37,7 +34,10 @@ yt-dlp = "==2023.06.22"
 pydub = "*"
 youtube-dl = {editable = true, git = "https://github.com/ytdl-org/youtube-dl.git"}
 accelerate = "*"
-[dev-packages]
+gradio = "==3.39.0"
+ffmpeg = "==1.4"
+ffprobe = "==0.5"
+[dev-packages] 
 
 [requires]
 python_version = "3.11"
