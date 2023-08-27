@@ -1,11 +1,11 @@
 
 
-from src.tubegpt.video.video_extractor import VideoExtractor
+from video.video_extractor import VideoExtractor
 import numpy as np
 import torch
-from lavis.models import load_model_and_preprocess
+#from lavis.models import load_model_and_preprocess
 from PIL import Image
-import torchvision.transforms as transforms
+#import torchvision.transforms as transforms
 import cv2
 import pafy
 import os
@@ -20,9 +20,9 @@ class SimpleVideoInfoExtractor(VideoExtractor):
         self.caption_per_image = caption_per_image
         self.keyframe_interval = keyframe_interval
 
-        self.model, self.vis_processors, _ = load_model_and_preprocess(
-            name="blip2_opt", model_type="pretrain_opt2.7b", is_eval=True, device=self.device
-        )
+        # self.model, self.vis_processors, _ = load_model_and_preprocess(
+        #     name="blip2_opt", model_type="pretrain_opt2.7b", is_eval=True, device=self.device
+        # )
 
     def video_to_text(self, url, file_path):
         if not (os.path.exists(file_path)):

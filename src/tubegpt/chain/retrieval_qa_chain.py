@@ -6,13 +6,13 @@ class RetrievalQAChain():
     def __init__(self) -> None:
         pass
 
-    def create_chain(self,retreiverdb,reader, prompt):
+    def create_chain(self,retreiver,reader, prompt):
         chain_type_kwargs = {"prompt": prompt}
         self.chain = RetrievalQA.from_chain_type(
             #llm=ChatOpenAI(temperature=0),
             llm=reader,
             chain_type="stuff",
-            retriever=retreiverdb.as_retriever(search_kwargs={"k": 1}),
+            retriever=retreiver,
             chain_type_kwargs=chain_type_kwargs)
         
     def get_chain(self):

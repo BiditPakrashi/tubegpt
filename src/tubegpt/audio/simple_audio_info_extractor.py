@@ -35,7 +35,7 @@ from langchain.document_loaders.blob_loaders import Blob
 import os
 import openai
 
-from src.tubegpt.audio.audio_extractor import AudioExtractor
+from audio.audio_extractor import AudioExtractor
 
 class SimpleAudioInfoExtractor(AudioExtractor):
     def __init__(self) -> None:
