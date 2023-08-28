@@ -16,6 +16,7 @@ import os
 import openai  
 from langchain.retrievers.merger_retriever import MergerRetriever     
 from dotenv import load_dotenv, find_dotenv
+import re
 
 # Environment Variables
 TIME_WINDOW = 10 # data for audio and vidio will be consolidated in this time (in secs)
@@ -45,8 +46,9 @@ class TubeGPT():
         processes audio to first get captions by using audio parser like openaiwhisper extractor provided
         then and then the documents are saved as embeddings in chromadb
         '''  
-        docs = audio_extractor.audio_to_text(vid_url,save_dir=save_dir)
-        self.__save_audio_embeddings(docs,embeddings=embeddings,db_path=f"{self.db_dir}/audio")
+        self.__extract_folder_id()
+        docs = audio_extractor.audio_to_text(vid_url,save_dir=f"{save_dir}/{self.folder_id}")
+        self.__save_audio_embeddings(docs,embeddings=embeddings,db_path=f"{self.db_dir}/{self.folder_id}/audio")
 
     # save audio embeddings
     def __save_audio_embeddings(self,docs,embeddings, db_path):
@@ -55,7 +57,14 @@ class TubeGPT():
             return
         self.audio_db = ChromaDB(db_path)
         self.audio_db.save_embeddings(docs,embeddings)
-    
+
+    def __extract_folder_id(self):
+        print(self.vid_url)
+        folder_search =  re.search("v=(.*?)(&|$)",self.vid_url[0])
+        if(folder_search):
+            self.folder_id = folder_search.group(1)
+            print(f"extracted folder id:{self.folder_id}")
+
     #2. Query audio
     def query_audio(self,question:str,reader)->str:
         '''
@@ -112,7 +121,7 @@ class TubeGPT():
         '''   
         docs = video_extractor.video_to_text(self.vid_url,file_path)
         description_docs = self.__caption_to_description(docs) #convert docs to description
-        self.__save_video_embeddings(description_docs,embeddings,f"{self.db_dir}/video")
+        self.__save_video_embeddings(description_docs,embeddings,f"{self.db_dir}/{self.folder_id}/video")
 
     def process_vision_from_desc(self,file_path,embeddings=OpenAIEmbeddings()):
         '''
@@ -121,7 +130,7 @@ class TubeGPT():
         are saved as embeddings in chromadb
         '''   
         description_docs = self.__get_vision_description_docs(file_path=file_path)
-        self.__save_video_embeddings(description_docs,embeddings,f"{self.db_dir}/video")
+        self.__save_video_embeddings(description_docs,embeddings,f"{self.db_dir}/{self.folder_id}/video")
 
 
     def __caption_to_description(self,docs_vision_caption)->List:
