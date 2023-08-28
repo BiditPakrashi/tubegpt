@@ -11,14 +11,11 @@ __tubegpt_dict = {}
 __url_list = []
 
 
-def query(url,question,is_vision=False,query_options="audio"):
+def query(url,question,query_options="audio"):
     if not url:
          return " url is empty"
-    #MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
-    #embeddings = HuggingFaceEmbeddings(model_name=MODEL_NAME)
-    #embeddings = OpenAIEmbeddings()
-    persist_directory="./db/audio"
-    tubegpt = __tubegpt_dict[url]
+    tubegpt = __tubegpt_dict[url]['tubegpt']
+    is_vision = __tubegpt_dict[url]['is_vision']
     print(query_options)
     if(query_options=="both"):
         if not(is_vision):
@@ -39,6 +36,10 @@ def query(url,question,is_vision=False,query_options="audio"):
 def process(url,is_vision=False,file_desc:_TemporaryFileWrapper=None, save_dir = "/Users/hbolak650/Downloads/movie-clip",progress=gr.Progress()):
     #MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
     #embeddings = HuggingFaceEmbeddings(model_name=MODEL_NAME)
+    #---
+    if(is_vision):
+         if not file_desc:
+              return "upload description file",None
     progress(0, desc="starting processing")
     embeddings = OpenAIEmbeddings()
     tubegpt = TubeGPT([url],save_dir)
@@ -48,8 +49,6 @@ def process(url,is_vision=False,file_desc:_TemporaryFileWrapper=None, save_dir =
     progress(0.5, desc="audio processing done")
     __tubegpt_dict[url] = tubegpt
     if(is_vision):
-         if not file_desc:
-              return "upload description file"
          progress(0.51, desc="processing vision data")
          time.sleep(0.1)
          tubegpt.process_vision_from_desc(file_path=file_desc.name,embeddings=embeddings)
@@ -60,12 +59,12 @@ def process(url,is_vision=False,file_desc:_TemporaryFileWrapper=None, save_dir =
          print("retrievers merged")
          progress(0.9, desc="retrieivers merged")
     
-    __tubegpt_dict[url] = tubegpt
+    __tubegpt_dict[url] = {'tubegpt':tubegpt,'is_vision':is_vision}
     __url_list.append(url)
     print(__tubegpt_dict)
     print(__url_list)
     progress(1, desc="all processing done !")
-    return ("all processing done",url)
+    return ("all processing done",gr.Dropdown.update(choices=__url_list))
 
 def read_textfile(file):
     with open(file, "r") as file_handle:
@@ -80,9 +79,9 @@ def format_chat_prompt(message, chat_history):
         prompt = f"{prompt}\nUser: {user_message}\nAssistant: {bot_message}"
     prompt = f"{prompt}\nUser: {message}\nAssistant:"
     return prompt
-def respond(url, message,is_vision,query_options, chat_history):
+def respond(url, message,query_options, chat_history):
         formatted_prompt = format_chat_prompt(message, chat_history)
-        bot_message = query(url,formatted_prompt,is_vision,query_options)
+        bot_message = query(url,formatted_prompt,query_options)
         # bot_message = client.generate(response,
         #                              max_new_tokens=1024,
         #                              stop_sequences=["\nUser:", "<|endoftext|>"]).generated_text
@@ -107,15 +106,14 @@ if __name__ == '__main__':
             with gr.Tab("Questions"):
                 chatbot = gr.Chatbot(height=350) #just to fit the notebook
                 msg = gr.Textbox(label="Question for video?")
-                url = gr.Textbox(label="provide youtube url")
+                url_processed = gr.Dropdown(choices=[], label="Processed url's",interactive=True,info="Select Youtube URL")
                 query_options = gr.Dropdown(["audio","vision","both"],info="Select Retreiver Model", label= "Retreiver Model")
                 btn = gr.Button("Submit")
-                #url = gr.Dropdown(__url_list)
                 clear = gr.ClearButton(components=[msg, chatbot], value="Clear console")
-                btn.click(respond, inputs=[url,msg,is_vision,query_options, chatbot], outputs=[msg, chatbot])
-                msg.submit(respond, inputs=[url, msg, is_vision,query_options, chatbot], outputs=[msg, chatbot]) #Press enter to submit
+                btn.click(respond, inputs=[url_processed,msg,query_options, chatbot], outputs=[msg, chatbot])
+                msg.submit(respond, inputs=[url_processed, msg,query_options, chatbot], outputs=[msg, chatbot]) #Press enter to submit
 
-            upload.click(process,inputs=[yt_url,is_vision,file_text], outputs=[text,url], api_name="process")  #command=on_submit_click
+            upload.click(process,inputs=[yt_url,is_vision,file_text], outputs=[text,url_processed], api_name="process")  #command=on_submit_click
 
 #demo.launch(share=True, server_port=7680)
 demo.queue(concurrency_count=20).launch(share=True, server_port=7680)
