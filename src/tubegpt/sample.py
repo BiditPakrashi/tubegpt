@@ -5,12 +5,43 @@ import time
 from tubegpt import TubeGPT
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import HuggingFaceEmbeddings, OpenAIEmbeddings
-
+import os
 
 __tubegpt_dict = {}
 __url_list = []
+db_dir = "./db"
 
+def initialize():
+    if(os.path.isdir(db_dir)):
+        subfolders = [ (f.path,f.name) for f in os.scandir(db_dir) if f.is_dir() ]
+        if(subfolders):
+            print("found existing embedidings. loading them...")
+            for folder in subfolders:
+                url = f"https://www.youtube.com/watch?v={folder[1]}"
+                chroma_folders = [ f.path for f in os.scandir(folder[0]) if f.is_dir()]
+                is_vision = False
+                for channel in chroma_folders:
+                    
+                    tubegpt = TubeGPT(url,db_dir)
+                    if("video" in channel):
+                        tubegpt.load_video(channel,embeddings = OpenAIEmbeddings())
+                        is_vision = True
+                    else:
+                        tubegpt.load_audio(channel,embeddings = OpenAIEmbeddings())
 
+                __tubegpt_dict[url] = {'tubegpt':tubegpt,'is_vision':is_vision}
+                __url_list.append(url)
+
+        print(__url_list)
+        print(__tubegpt_dict)
+
+    else:
+         print("db dir not found, nothing to load")    
+
+def refresh_url_list():
+     return gr.Dropdown.update(choices=__url_list)
+                        
+                     
 def query(url,question,query_options="audio"):
     if not url:
          return " url is empty"
@@ -47,7 +78,7 @@ def process(url,is_vision=False,file_desc:_TemporaryFileWrapper=None, save_dir =
     tubegpt.process_audio([url],save_dir,embeddings=embeddings)
     print("audio processing done")
     progress(0.5, desc="audio processing done")
-    __tubegpt_dict[url] = tubegpt
+    #__tubegpt_dict[url] = tubegpt
     if(is_vision):
          progress(0.51, desc="processing vision data")
          time.sleep(0.1)
@@ -81,39 +112,45 @@ def format_chat_prompt(message, chat_history):
     return prompt
 def respond(url, message,query_options, chat_history):
         formatted_prompt = format_chat_prompt(message, chat_history)
-        bot_message = query(url,formatted_prompt,query_options)
+        #bot_message = query(url,formatted_prompt,query_options)
+        bot_message = query(url,message,query_options)
         # bot_message = client.generate(response,
         #                              max_new_tokens=1024,
         #                              stop_sequences=["\nUser:", "<|endoftext|>"]).generated_text
         chat_history.append((message, bot_message))
+        print(f"chat_history: {chat_history}")
         return "", chat_history
 
-if __name__ == '__main__': 
+
     
-    with gr.Blocks(theme=gr.themes.Soft()) as demo:
-            with gr.Tab("Video Processing"): 
-                yt_url =  gr.Textbox(
-                    label="VideoURL",
-                    value="Provide youtube URL here"
-                )
-                is_vision  = gr.Checkbox(label="vision", info="Process Vision Data?")
-                #description_file = gr.File(label="Video Description File")
-                file_text = gr.File(inputs='files', outputs='text',label="Upload Video Description file")
-                upload = gr.Button("process")
-                text=gr.Markdown()
+with gr.Blocks(theme=gr.themes.Soft()) as demo:
+        with gr.Tab("Video Processing"): 
+            yt_url =  gr.Textbox(
+                label="VideoURL",
+                value="Provide youtube URL here"
+            )
+            is_vision  = gr.Checkbox(label="vision", info="Process Vision Data?")
+            #description_file = gr.File(label="Video Description File")
+            file_text = gr.File(inputs='files', outputs='text',label="Upload Video Description file")
+            upload = gr.Button("process")
+            text=gr.Markdown()
 
-                
-            with gr.Tab("Questions"):
-                chatbot = gr.Chatbot(height=350) #just to fit the notebook
-                msg = gr.Textbox(label="Question for video?")
-                url_processed = gr.Dropdown(choices=[], label="Processed url's",interactive=True,info="Select Youtube URL")
-                query_options = gr.Dropdown(["audio","vision","both"],info="Select Retreiver Model", label= "Retreiver Model")
-                btn = gr.Button("Submit")
-                clear = gr.ClearButton(components=[msg, chatbot], value="Clear console")
-                btn.click(respond, inputs=[url_processed,msg,query_options, chatbot], outputs=[msg, chatbot])
-                msg.submit(respond, inputs=[url_processed, msg,query_options, chatbot], outputs=[msg, chatbot]) #Press enter to submit
+            
+        with gr.Tab("Questions") as question:
+            chatbot = gr.Chatbot(height=350) #just to fit the notebook
+            msg = gr.Textbox(label="Question for video?")
+            url_processed = gr.Dropdown(choices=[], label="Processed url's",interactive=True,info="Select Youtube URL")
+            query_options = gr.Dropdown(["audio","vision","both"],info="Select Retreiver Model", label= "Retreiver Model")
+            btn = gr.Button("Submit")
+            refresh_url = gr.Button("Refresh URL List")
+            clear = gr.ClearButton(components=[msg, chatbot], value="Clear console")
+            btn.click(respond, inputs=[url_processed,msg,query_options, chatbot], outputs=[msg, chatbot])
+            msg.submit(respond, inputs=[url_processed, msg,query_options, chatbot], outputs=[msg, chatbot]) #Press enter to submit
 
-            upload.click(process,inputs=[yt_url,is_vision,file_text], outputs=[text,url_processed], api_name="process")  #command=on_submit_click
+        upload.click(process,inputs=[yt_url,is_vision,file_text], outputs=[text,url_processed], api_name="process")  #command=on_submit_click
+        initialize()
+        refresh_url.click(refresh_url_list, inputs=[],outputs=url_processed)
 
 #demo.launch(share=True, server_port=7680)
-demo.queue(concurrency_count=20).launch(share=True, server_port=7680)
+if __name__ == '__main__': 
+    demo.queue(concurrency_count=20).launch(share=True, server_port=7680)
