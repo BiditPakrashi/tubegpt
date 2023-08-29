@@ -14,6 +14,8 @@ class ChromaDB():
         self.db = Chroma.from_documents(
             documents=docs, embedding= embeddings, persist_directory=self.persist_dir
         )
+        print(self.db._collection)
+        print(self.db.__str__)
         self.embedding = embeddings
 
     def presist_db(self):

@@ -13,11 +13,15 @@ class RetrievalQAChain():
             llm=reader,
             chain_type="stuff",
             retriever=retreiver,
-            chain_type_kwargs=chain_type_kwargs)
+            chain_type_kwargs=chain_type_kwargs,
+            return_source_documents=True
+        )
         
     def get_chain(self):
         return self.chain
         
     def query(self,question):
-        response = self.chain.run(question)
+        print(f" using chain: {self.chain.json()}")
+        #response = self.chain.run(question)
+        response = self.chain(question)
         return response

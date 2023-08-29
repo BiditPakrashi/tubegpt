@@ -65,6 +65,17 @@ class TubeGPT():
             self.folder_id = folder_search.group(1)
             print(f"extracted folder id:{self.folder_id}")
 
+    def load_audio(self,db_path, embeddings = OpenAIEmbeddings()):
+        self.audio_db = ChromaDB(db_path)
+        self.audio_db.load_db(embedding_function=embeddings)
+        print(f"loaded chroma audio db from {db_path}")
+
+    def load_video(self,db_path, embeddings = OpenAIEmbeddings()):
+        self.video_db = ChromaDB(db_path)
+        self.video_db.load_db(embedding_function=embeddings)
+        print(f"loaded chroma video db from {db_path}")
+
+
     #2. Query audio
     def query_audio(self,question:str,reader)->str:
         '''
@@ -75,11 +86,14 @@ class TubeGPT():
 
         if(self.audio_chain):
             print("audio chain already exists, querying using that")
-            return self.audio_chain.query(question)
-        
-        self.__get_audio_chain(self.audio_db,reader=reader)
-        print(self.audio_chain)
-        return self.audio_chain.query(question)
+            chain = self.audio_chain
+        else:
+            chain = self.__get_audio_chain(self.audio_db,reader=reader)
+        print("audio chain ->")
+        print(chain)
+        response = chain.query(question)
+        print(response)
+        return response['result']
     
     #2. Query audio with loading existing db
     def query_audio_withload(self,question:str,reader,audio_db)->str:
@@ -93,15 +107,16 @@ class TubeGPT():
             print("audio chain already exists, querying using that")
             return self.audio_chain.query(question)
         
-        self.__get_audio_chain(audio_db,reader=reader)
+        chain = self.__get_audio_chain(audio_db,reader=reader)
         print(self.audio_chain)
-        return self.audio_chain.query(question)
+        return chain.query(question)
     
     
     def __get_audio_chain(self, retreiverdb, reader) -> RetrievalQAChain:
         if(self.audio_chain):
             return self.audio_chain
         
+        print("creating new audio chain")
         self.audio_chain = RetrievalQAChain()
         prompt = ModelPrompt()
         print(
@@ -109,7 +124,8 @@ class TubeGPT():
                     context="A youtube user asking about contents ",
                     question="Why do we need to zero out the gradient before backprop at each step?")
 )
-        self.audio_chain.create_chain(retreiver=retreiverdb.db.as_retriever(search_kwargs={"k": 1}),reader=reader,prompt=prompt.get_audio_prompt())
+        ret = retreiverdb.db.as_retriever(search_kwargs={"k": 1})
+        self.audio_chain.create_chain(retreiver=ret,reader=reader,prompt=prompt.get_audio_prompt())
         return self.audio_chain
     
 
@@ -169,10 +185,14 @@ class TubeGPT():
         queries using vision reader retrieval model and returns the response
         ''' 
         if(self.vision_chain):
-            return self.vision_chain.query(question)
-        
-        self.__get_vision_chain(self.vision_db,reader=reader)
-        return self.vision_chain.query(question)
+            chain = self.vision_chain
+        else:
+            chain = self.__get_vision_chain(self.vision_db,reader=reader)
+        print("vision chain ->")
+        print(chain)
+        response = chain.query(question)
+        print(response)
+        return response['result']
     
     def __get_vision_chain(self, retreiverdb, reader) -> RetrievalQAChain:
         if(self.vision_chain):
@@ -198,10 +218,15 @@ class TubeGPT():
         queries using audio and vision reader retrieval model and returns the response
         ''' 
         if(self.merged_chain):
-            return self.merged_chain.query(question)
-        
-        self.__get_merged_chain(self.merger_retreiver,reader=reader)
-        return self.merged_chain.query(question)
+            chain = self.merged_chain
+        else:
+            chain = self.__get_merged_chain(self.merger_retreiver,reader=reader)
+        print("merged chain ->")
+        print(chain)
+        response = chain.query(question)
+        print(response)
+        return response['result']
+
     
     def __get_merged_chain(self, retreiver, reader) -> RetrievalQAChain:
         if(self.merged_chain):
