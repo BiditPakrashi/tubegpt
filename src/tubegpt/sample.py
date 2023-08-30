@@ -6,6 +6,7 @@ from tubegpt import TubeGPT
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import HuggingFaceEmbeddings, OpenAIEmbeddings
 import os
+import re
 
 __tubegpt_dict = {}
 __url_list = []
@@ -102,6 +103,20 @@ def read_textfile(file):
         file_text = file_handle.read()
     return file_text
 
+def update_url(url):
+    embed_html = extract_youtube_embed_code(url)
+    gr.HTML(embed_html)
+
+def extract_youtube_embed_code(url):
+    pattern = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/)?([a-zA-Z0-9_-]+)"
+    match = re.match(pattern, url)
+    if match:
+        video_id = match.group(1)
+        embed_code = f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allowfullscreen></iframe>'
+        return embed_code
+    else:
+        return None
+
 
 def format_chat_prompt(message, chat_history):
     prompt = ""
@@ -140,6 +155,10 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             chatbot = gr.Chatbot(height=350) #just to fit the notebook
             msg = gr.Textbox(label="Question for video?")
             url_processed = gr.Dropdown(choices=[], label="Processed url's",interactive=True,info="Select Youtube URL")
+            # embed_html = extract_youtube_embed_code(
+            # url_processed
+            # )
+            html = gr.HTML("")
             query_options = gr.Dropdown(["audio","vision","both"],info="Select Retreiver Model", label= "Retreiver Model")
             btn = gr.Button("Submit")
             refresh_url = gr.Button("Refresh URL List")
@@ -150,6 +169,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         upload.click(process,inputs=[yt_url,is_vision,file_text], outputs=[text,url_processed], api_name="process")  #command=on_submit_click
         initialize()
         refresh_url.click(refresh_url_list, inputs=[],outputs=url_processed)
+        url_processed.change(update_url,inputs=[url_processed], outputs=[html])
 
 #demo.launch(share=True, server_port=7680)
 if __name__ == '__main__': 
